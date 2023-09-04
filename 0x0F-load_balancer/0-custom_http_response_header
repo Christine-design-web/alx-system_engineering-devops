@@ -1,34 +1,26 @@
 #!/usr/bin/env bash
-# Installs Nginx with the following configurations:
-#+    Listens on port 80.
-#+    Returns a page containing "Hello World!" when queried
-#+     at the root with a curl GET request.
-# Configures /redirect_me as a "301 Moved Permanently".
-# Includes a custom 404 page containing "Ceci n'est pas une page".
+# Configure server with: Nginx, custom 404, custom 301 redirect to google
+# Add to HTTP header
+
+ADD301_REDIRECT="\\\tlocation /redirect_me {\n\t\t return 301 https://google.com;\n\t}\n"
+ADD404_NOTFOUND="error_page 404 /custom_404.html;\n\\tlocation = /custom_404.html {\n\t\t root /usr/share/nginx/html;\n\t\tinternal;\n\t}\n"
+PATTERN="#error_page 404 /404.html;"
+ADD_HEADER="\\\tadd_header X-Served-By $HOSTNAME;"
 
 sudo apt-get update
-sudo apt-get install -y nginx
+sudo apt-get -y install nginx
+sudo service nginx start
 
-sudo mkdir /etc/nginx/html
-sudo touch /etc/nginx/html/index.html
-echo "Hello World!" > /etc/nginx/html/index.html
-sudo touch /etc/nginx/html/404.html
-echo "Ceci n'est pas une page" > /etc/nginx/html/404.html
+echo "Hello world!" | sudo tee /usr/share/nginx/html/index.html
 
-printf %s "server {
-    listen 80;
-    listen [::]:80 default_server;
-    add_header X-Served-By $HOSTNAME;
-    root   /etc/nginx/html;
-    index  index.html index.htm;
-    location /redirect_me {
-        return 301 https://www.youtube.com/watch?v=QH2-TGUlwu4;
-    }
-    error_page 404 /404.html;
-    location /404 {
-      root /etc/nginx/html;
-      internal;
-    }
-}" > /etc/nginx/sites-available/default
+#redirect_me redirects to google.com (add to line 30)
+sudo sed -i "30i $ADD301_REDIRECT" /etc/nginx/sites-available/default
+
+# Any page that errors shows this new custom_404.html page
+echo "AM BATMAN" | sudo tee /usr/share/nginx/html/custom_404.html
+sudo sed -i "s@$PATTERN@$ADD404_NOTFOUND@" /etc/nginx/sites-available/default
+
+# Header is updated (add_header to file)
+sudo sed -i "27i $ADD_HEADER" /etc/nginx/sites-available/default
 
 sudo service nginx restart
