@@ -1,4 +1,4 @@
-nstalls Nginx and custom HTTP response headers
+#installs Nginx and custom HTTP response headers
 exec { '/usr/bin/env apt-get -y update' : }
 -> package { 'nginx':
   ensure => installed,
